@@ -65,8 +65,12 @@ pub use types::*;
 // For `format!`
 extern crate alloc;
 
-use pallet_starknet_runtime_api::{RuntimeArg};
-use parity_scale_codec::{Encode, Decode, Error as ScaleError};
+use pallet_starknet_runtime_api::{RuntimeArg, RuntimeRet};
+use parity_scale_codec::{
+    Encode,
+    Decode,
+    // Error as ScaleError
+};
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
 construct_runtime!(
@@ -388,7 +392,7 @@ impl_runtime_apis! {
     }
 
     impl pallet_starknet_runtime_api::ConvertTransactionRuntimeApi<Block> for Runtime {
-        fn convert_account_transaction(transaction: AccountTransaction) -> UncheckedExtrinsic {
+        fn convert_account_transaction(transaction: AccountTransaction) -> OpaqueExtrinsic {
             let call = match transaction {
                 AccountTransaction::Declare(tx) => {
                     pallet_starknet::Call::declare { transaction: tx }
@@ -401,13 +405,17 @@ impl_runtime_apis! {
                 }
             };
 
-            UncheckedExtrinsic::new_unsigned(call.into())
+            let ex = UncheckedExtrinsic::new_unsigned(call.into());
+            let ex_bytes = ex.encode();
+            OpaqueExtrinsic::from_bytes(ex_bytes.as_slice()).unwrap()
         }
 
-        fn convert_l1_transaction(transaction: L1HandlerTransaction) -> UncheckedExtrinsic {
+        fn convert_l1_transaction(transaction: L1HandlerTransaction) -> OpaqueExtrinsic {
             let call =  pallet_starknet::Call::<Runtime>::consume_l1_message { transaction };
+            let ex = UncheckedExtrinsic::new_unsigned(call.into());
 
-            UncheckedExtrinsic::new_unsigned(call.into())
+            let ex_bytes = ex.encode();
+            OpaqueExtrinsic::from_bytes(ex_bytes.as_slice()).unwrap()
         }
 
     }

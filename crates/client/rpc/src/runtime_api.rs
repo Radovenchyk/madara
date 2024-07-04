@@ -14,7 +14,7 @@ use mp_simulations::SimulationFlags;
 use pallet_starknet_runtime_api::{ConvertTransactionRuntimeApi, StarknetRuntimeApi};
 use sc_client_api::backend::Backend;
 use sc_transaction_pool::ChainApi;
-use sp_api::{ApiError, Encode, ProvideRuntimeApi};
+use sp_api::{ApiError, Decode, Encode, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
 use sp_runtime::OpaqueExtrinsic;
 use sp_runtime::traits::Block as BlockT;
@@ -98,8 +98,12 @@ where
         best_block_hash: <B as BlockT>::Hash,
         transaction: AccountTransaction,
     ) -> RpcApiResult<B::Extrinsic> {
-        self.client.runtime_api().convert_account_transaction(best_block_hash, transaction).map_err(|e| {
+        let oex = self.client.runtime_api().convert_account_transaction(best_block_hash, transaction).map_err(|e| {
             error!("Failed to convert transaction: {:?}", e);
+            StarknetRpcApiError::InternalServerError
+        })?;
+        
+        B::Extrinsic::decode(&mut oex.encode().as_slice()).map_err(|_e| {
             StarknetRpcApiError::InternalServerError
         })
     }

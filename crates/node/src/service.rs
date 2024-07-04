@@ -21,7 +21,7 @@ use mp_starknet_inherent::{
     InherentDataProvider as StarknetInherentDataProvider, InherentError as StarknetInherentError, L1GasPrices,
     StarknetInherentData, DEFAULT_SEQUENCER_ADDRESS, SEQ_ADDR_STORAGE_KEY,
 };
-use pallet_starknet_runtime_api::{RuntimeArg, StarknetRuntimeApi};
+use pallet_starknet_runtime_api::{RuntimeArg, RuntimeRet, StarknetRuntimeApi};
 use prometheus_endpoint::Registry;
 use sc_basic_authorship::ProposerFactory;
 use sc_client_api::{Backend, BlockBackend, BlockchainEvents, HeaderBackend};
@@ -60,12 +60,13 @@ impl sc_executor::NativeExecutionDispatch for ExecutorDispatch {
     type ExtendHostFunctions = ();
 
     type Arg = RuntimeArg<Block>;
+    type Ret = RuntimeRet<Block>;
     
     fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
         madara_runtime::api::dispatch(method, data)
     }
 
-    fn dispatch_native(method: &str, data: &[Self::Arg]) -> Option<Vec<u8>> {
+    fn dispatch_native(method: &str, data: &[Self::Arg]) -> Option<Self::Ret> {
         madara_runtime::api::dispatch_native(method, data)
     }
 
